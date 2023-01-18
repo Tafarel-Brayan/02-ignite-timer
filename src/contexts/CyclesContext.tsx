@@ -66,7 +66,6 @@ export function CyclesContextProvider({
     setCycles((state) => [...state, newCycle]); // (state) é o meu estado atual, ou seja, tudo o que tiver em cycles
     setActiveCycleId(newCycle.id);
     setAmountSecondsPassed(0);
-    // reset();
   };
 
   const interruptCurrentCycle = () => {

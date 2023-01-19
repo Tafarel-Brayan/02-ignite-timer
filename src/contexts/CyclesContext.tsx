@@ -1,17 +1,15 @@
-import { createContext, useState } from "react";
+import { createContext, useReducer, useState } from "react";
+import {
+  ActionTypesCycle,
+  addNewCycleAction,
+  interruptCurrentCycleAction,
+  markCurrentCycleAsFinishedAction,
+} from "../reducers/cycles/actions";
+import { Cycle, cyclesReducer } from "../reducers/cycles/reducer";
 
 interface CreateCycleData {
   task: string;
   minutesAmount: number;
-}
-
-export interface Cycle {
-  id: string;
-  task: string;
-  minutesAmount: number;
-  startDate: Date;
-  interruptedDate?: Date;
-  finisheddDate?: Date;
 }
 
 interface CyclesContextType {
@@ -34,22 +32,22 @@ interface CyclesContextProviderProps {
 export function CyclesContextProvider({
   children,
 }: CyclesContextProviderProps) {
-  const [cycles, setCycles] = useState<Cycle[]>([]);
-  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
-  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+  /**
+   * useReducer recebe dois parametros
+   * 1º uma função
+   * 2º O valor inicial da variaval
+   *
+   * 1.1 - A função, sempre recebe dois parâmetros: state (valor atual do estado) e action (ação que o usuário quer realizar dentro da variável)
+   */
+  const [cyclesState, dispatch] = useReducer(cyclesReducer, {
+    cycles: [],
+    activeCycleId: null,
+  });
+
   const [amountSecondsPassed, setAmountSecondsPassed] = useState<number>(0);
 
-  const markCurrentCycleAsFinished = () => {
-    setCycles((state) =>
-      state.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return { ...cycle, finisheddDate: new Date() };
-        } else {
-          return cycle;
-        }
-      })
-    );
-  };
+  const { cycles, activeCycleId } = cyclesState;
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
 
   const setSecondsPassed = (seconds: number) => {
     setAmountSecondsPassed(seconds);
@@ -63,23 +61,17 @@ export function CyclesContextProvider({
       startDate: new Date(),
     };
 
-    setCycles((state) => [...state, newCycle]); // (state) é o meu estado atual, ou seja, tudo o que tiver em cycles
-    setActiveCycleId(newCycle.id);
+    dispatch(addNewCycleAction(newCycle));
+
     setAmountSecondsPassed(0);
   };
 
   const interruptCurrentCycle = () => {
-    setCycles((state) =>
-      state.map((cycle) => {
-        if (cycle.id === activeCycleId) {
-          return { ...cycle, interruptedDate: new Date() };
-        } else {
-          return cycle;
-        }
-      })
-    );
+    dispatch(interruptCurrentCycleAction());
+  };
 
-    setActiveCycleId(null);
+  const markCurrentCycleAsFinished = () => {
+    dispatch(markCurrentCycleAsFinishedAction());
   };
 
   return (
